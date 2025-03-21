@@ -1,6 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from pydantic import BaseModel
+import bcrypt
+
+class User(BaseModel):
+    number: int
+    name: str
+    surname: str
+    password: str
 
 app = FastAPI()
 
@@ -10,7 +18,7 @@ users = {}
 async def startup_db_client():
     uri = "mongodb+srv://crud-user:BjIQqtjEhUqvCPxw@crud.d14a5.mongodb.net/?retryWrites=true&w=majority&appName=CRUD"
     app.mongodb_client = MongoClient(uri, server_api=ServerApi('1'))
-    app.mongodb = app.mongodb_client["CRUD"]
+    app.mongodb = app.mongodb_client["crud"]
 
     try:
         app.mongodb_client.admin.command('ping')
@@ -23,17 +31,23 @@ def shutdown_db_client():
     app.mongodb_client.close()
 
 @app.post("/register")
-async def register_user(number: int, password: str, name: str, surname: str ):
-    user = {
-        "password": password,
-        "name": name,
-        "surname": surname,
+async def register_user(user: User):
+    existing_user = app.mongodb["users"].find_one({"number": user.number})
+    if existing_user:
+        raise HTTPException(status_code = 400, detail = "Number taken")
+    
+    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
+
+    user_obj = {
+        "number": user.number,
+        "name": user.name,
+        "surname": user.surname,
+        "password": hashed_password
     }
 
-    if number in users:
-        return {"message": "taken"}
-    users[number] = user
-    return {"message": "registered"}
+    app.mongodb["users"].insert_one(user_obj) #? Tutaj sprawdzić, czy istnieje jakaś obsługa błędów
+
+    return {"message": "User registered"}
 
 @app.get("/users")
 async def get_users():
