@@ -2,7 +2,10 @@ from fastapi import FastAPI, HTTPException
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
 import bcrypt
+import os
 
 class User(BaseModel):
     number: int
@@ -14,13 +17,13 @@ class LoginUser(BaseModel):
     number: int
     password: str
 
-app = FastAPI()
+JWT_SECRET = os.getenv("JWT_SECRET")
 
-users = {}
+app = FastAPI()
 
 @app.on_event("startup")
 async def startup_db_client():
-    uri = "mongodb+srv://crud-user:BjIQqtjEhUqvCPxw@crud.d14a5.mongodb.net/?retryWrites=true&w=majority&appName=CRUD"
+    uri = os.getenv("MONGO_URI")
     app.mongodb_client = MongoClient(uri, server_api=ServerApi('1'))
     app.mongodb = app.mongodb_client["crud"]
 
