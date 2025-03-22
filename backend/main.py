@@ -10,6 +10,10 @@ class User(BaseModel):
     surname: str
     password: str
 
+class LoginUser(BaseModel):
+    number: int
+    password: str
+
 app = FastAPI()
 
 users = {}
@@ -36,8 +40,8 @@ async def register_user(user: User):
     if existing_user:
         raise HTTPException(status_code = 400, detail = "Number taken")
     
-    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
-
+    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt()) # Paskudnie to wygląda w database
+                                                                                     #TODO wrzucić to do stringa potem
     user_obj = {
         "number": user.number,
         "name": user.name,
@@ -49,13 +53,13 @@ async def register_user(user: User):
 
     return {"message": "User registered"}
 
-@app.get("/users")
-async def get_users():
-    return {"users": [{"number": key, **value} for key, value in users.items()]}
-
-@app.get("/users/{number}")
-async def get_user(number: int):
-    if number not in users:
-        raise HTTPException(status_code = 404, detail = "User not found")
-    user = {"number": number, **users[number]}
-    return {"user": user}
+@app.post("/login")
+def login_user(user: LoginUser):
+    user_record = app.mongodb["users"].find_one({"number": user.number})
+    if not user_record:
+        raise HTTPException(status_code = 400, detail = "Wrong number") #! tylko do debugu, dopisać potem or password
+    
+    if not bcrypt.checkpw(user.password.encode("utf-8"), user_record["password"]):
+        raise HTTPException(status_code = 400, detail = "Wrong password") #! tylko do debugu, dopisać to, co wyżej
+    
+    return{"message": "valid"}
