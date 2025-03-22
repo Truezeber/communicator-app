@@ -80,4 +80,6 @@ def login_user(user: LoginUser):
     if not bcrypt.checkpw(user.password.encode("utf-8"), user_record["password"]):
         raise HTTPException(status_code = 400, detail = "Wrong number or password")
     
-    return{"message": "valid"}
+    #TODO ☝️ to mogę zapisać w jednym ifie kiedyśtam
+    
+    token = create_token(data = {"sub": str(user.number)})
