@@ -29,6 +29,13 @@ class LoginToken(BaseModel):
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 
+def create_token(data: dict, expire_in: int = 30):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes = expire_in)
+    to_encode.update({"exp": expire})
+    token = jwt.encode(to_encode, JWT_SECRET, algorithm = JWT_ALGORITHM)
+    return token
+
 @app.on_event("startup")
 async def startup_db_client():
     uri = os.getenv("MONGO_URI")
