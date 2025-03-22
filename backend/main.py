@@ -8,9 +8,10 @@ from pymongo.server_api import ServerApi
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from jwt.exceptions import InvalidTokenError
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
-
+app = FastAPI()
 class User(BaseModel):
     number: int
     name: str
@@ -21,9 +22,12 @@ class LoginUser(BaseModel):
     number: int
     password: str
 
-JWT_SECRET = os.getenv("JWT_SECRET")
+class LoginToken(BaseModel):
+    access_token: str
+    token_type: str
 
-app = FastAPI()
+JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 
 @app.on_event("startup")
 async def startup_db_client():
