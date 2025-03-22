@@ -1,11 +1,15 @@
+import jwt
+import bcrypt
+import os
+
 from fastapi import FastAPI, HTTPException
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from jwt.exceptions import InvalidTokenError
 
-import bcrypt
-import os
+load_dotenv()
 
 class User(BaseModel):
     number: int
