@@ -105,8 +105,6 @@ def login_user(user: LoginUser):
 
 @app.get("/test")
 def test_token(authorization: str = Header(None)):
-
-    print (f"Dostałem header: {authorization}")
     if not authorization:
         raise HTTPException(status_code = 401, detail = "Authorization header missing")
     
