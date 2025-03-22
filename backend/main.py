@@ -36,6 +36,18 @@ def create_token(data: dict, expire_in: int = 30):
     token = jwt.encode(to_encode, JWT_SECRET, algorithm = JWT_ALGORITHM)
     return token
 
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms = [JWT_ALGORITHM])
+        user_number = payload.get("sub")
+        if user_number is None:
+            raise HTTPException(status_code = 403, detail = "Invalid token")
+        return int(user_number)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code = 403, detail = "Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code = 403, detail = "Invalid token")
+
 @app.on_event("startup")
 async def startup_db_client():
     uri = os.getenv("MONGO_URI")
