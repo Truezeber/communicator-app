@@ -82,4 +82,5 @@ def login_user(user: LoginUser):
     
     #TODO ☝️ to mogę zapisać w jednym ifie kiedyśtam
     
-    token = create_token(data = {"sub": str(user.number)})
+    token = create_token(data = {"sub": int(user.number)})
+    return {"access_token": token, "token_type": "bearer"}
