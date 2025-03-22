@@ -26,8 +26,8 @@ class LoginToken(BaseModel):
     access_token: str
     token_type: str
 
-JWT_SECRET = os.getenv("JWT_SECRET")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+JWT_SECRET = os.getenv("JWT_SECRET") or "7938013fe5cec581a02dc8d547077804dfa02a1a07a9daac64890607da927013"
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
 
 def create_token(data: dict, expire_in: int = 30):
     to_encode = data.copy()
