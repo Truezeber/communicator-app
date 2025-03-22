@@ -2,12 +2,11 @@ import jwt
 import bcrypt
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from jwt.exceptions import InvalidTokenError
 from datetime import datetime, timedelta, timezone
 
 load_dotenv()
@@ -31,22 +30,29 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
 
 def create_token(data: dict, expire_in: int = 30):
     to_encode = data.copy()
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
     expire = datetime.now(timezone.utc) + timedelta(minutes = expire_in)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": int(expire.timestamp())})
     token = jwt.encode(to_encode, JWT_SECRET, algorithm = JWT_ALGORITHM)
     return token
 
 def verify_token(token: str):
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms = [JWT_ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM], options={"verify_exp": True})
         user_number = payload.get("sub")
         if user_number is None:
-            raise HTTPException(status_code = 403, detail = "Invalid token")
+            raise HTTPException(status_code = 403, detail = "Invalid token: no subject")
         return int(user_number)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code = 403, detail = "Token has expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code = 403, detail = "Invalid token")
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code = 403, detail = f"Invalid token: {str(e)}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code = 500, detail = f"Unexpected error: {str(e)}")
+
 
 @app.on_event("startup")
 async def startup_db_client():
@@ -70,7 +76,7 @@ async def register_user(user: User):
     if existing_user:
         raise HTTPException(status_code = 400, detail = "Number taken")
     
-    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt()) # Paskudnie to wygląda w database
+    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt()) #TODO Paskudnie to wygląda w database
                                                                                      #TODO wrzucić to do stringa potem
     user_obj = {
         "number": user.number,
@@ -96,3 +102,22 @@ def login_user(user: LoginUser):
     
     token = create_token(data = {"sub": int(user.number)})
     return {"access_token": token, "token_type": "bearer"}
+
+@app.get("/test")
+def test_token(authorization: str = Header(None)):
+
+    print (f"Dostałem header: {authorization}")
+    if not authorization:
+        raise HTTPException(status_code = 401, detail = "Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
+    
+    token = authorization[len("Bearer "):]
+    user_number = verify_token(token)
+
+    user = app.mongodb["users"].find_one({"number": user_number})
+    if not user:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    
+    return {"name": user["name"],"surname": user["surname"]}
