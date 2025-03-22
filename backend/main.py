@@ -25,6 +25,9 @@ class LoginToken(BaseModel):
     access_token: str
     token_type: str
 
+class AddContact(BaseModel):
+    number: int
+
 JWT_SECRET = os.getenv("JWT_SECRET") or "7938013fe5cec581a02dc8d547077804dfa02a1a07a9daac64890607da927013"
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
 
@@ -90,7 +93,7 @@ async def register_user(user: User):
     return {"message": "User registered"}
 
 @app.post("/login")
-def login_user(user: LoginUser):
+async def login_user(user: LoginUser):
     user_record = app.mongodb["users"].find_one({"number": user.number})
     if not user_record:
         raise HTTPException(status_code = 400, detail = "Wrong number or password")
@@ -104,7 +107,7 @@ def login_user(user: LoginUser):
     return {"access_token": token, "token_type": "bearer"}
 
 @app.get("/test")
-def test_token(authorization: str = Header(None)):
+async def test_token(test: str, authorization: str = Header(None)):
     if not authorization:
         raise HTTPException(status_code = 401, detail = "Authorization header missing")
     
@@ -118,4 +121,4 @@ def test_token(authorization: str = Header(None)):
     if not user:
         raise HTTPException(status_code = 404, detail = "User not found")
     
-    return {"name": user["name"],"surname": user["surname"]}
+    return {"name": user["name"],"surname": user["surname"], "param": test}
