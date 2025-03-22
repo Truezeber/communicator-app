@@ -60,9 +60,9 @@ async def register_user(user: User):
 def login_user(user: LoginUser):
     user_record = app.mongodb["users"].find_one({"number": user.number})
     if not user_record:
-        raise HTTPException(status_code = 400, detail = "Wrong number") #! tylko do debugu, dopisać potem or password
+        raise HTTPException(status_code = 400, detail = "Wrong number or password")
     
     if not bcrypt.checkpw(user.password.encode("utf-8"), user_record["password"]):
-        raise HTTPException(status_code = 400, detail = "Wrong password") #! tylko do debugu, dopisać to, co wyżej
+        raise HTTPException(status_code = 400, detail = "Wrong number or password")
     
     return{"message": "valid"}
