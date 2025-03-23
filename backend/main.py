@@ -163,6 +163,8 @@ async def add_contact(number: int, authorization: str = Header(None)):
 
     if result.modified_count == 0:
         raise HTTPException(status_code = 500, detail = "Unexpected error")
+    
+    return {"message": "Contact added"}
 
 @app.get("/contacts")
 async def get_contacts(authorization: str = Header(None)):
