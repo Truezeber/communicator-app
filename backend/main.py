@@ -1,6 +1,8 @@
 import jwt
 import bcrypt
 import os
+import time
+import random
 
 from fastapi import FastAPI, HTTPException, Header
 from pymongo.mongo_client import MongoClient
@@ -122,3 +124,42 @@ async def test_token(test: str, authorization: str = Header(None)):
         raise HTTPException(status_code = 404, detail = "User not found")
     
     return {"name": user["name"],"surname": user["surname"], "param": test}
+
+@app.post("/contacts/add")
+async def add_contact(number: int, authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code = 401, detail = "Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
+    
+    token = authorization[len("Bearer "):]
+    user_number = verify_token(token)
+
+    #TODO ☝️ Całe to to w ogóle mogę potem do funkcji jakiejś wrzucić, bo przy tylu endpointach to będzie wyglądać tragicznie
+
+    conversations = app.mongodb["conversations"].find_one({"owner": user_number})
+
+    if not conversations:
+        new_conversations = {
+            "owner": user_number,
+            "contacts": []
+        }
+        app.mongodb["conversations"].insert_one(new_conversations)
+
+    existing_contact = app.mongodb["conversations"].find_one(
+        {"owner": user_number, "contacts.number": number}
+    )
+
+    if existing_contact:
+        raise HTTPException(status_code = 400, detail = "Contact is existing")
+    
+    id = f"{int(time.time())}{random.randint(1000, 9999)}"
+
+    result = app.mongodb["conversations"].update_one(
+        {"owner": user_number},
+        {"$push": {"contacts": {"number": number, "id": id}}}
+    )
+
+    if result.modified_count == 0:
+        raise HTTPException(status_code = 500, detail = "Unexpected error")
