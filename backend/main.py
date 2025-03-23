@@ -3,8 +3,9 @@ import bcrypt
 import os
 import time
 import random
+import json
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, WebSocket, WebSocketDisconnect, status
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pydantic import BaseModel
@@ -13,6 +14,8 @@ from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 app = FastAPI()
+active_connections = {}
+
 class User(BaseModel):
     number: int
     name: str
@@ -57,6 +60,26 @@ def verify_token(token: str):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code = 500, detail = f"Unexpected error: {str(e)}")
+    
+async def websocket_auth(websocket: WebSocket):
+    query_params = websocket.query_params
+    authorization = query_params.get("authorization")
+
+    if not authorization:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+    
+    if not authorization.startswith("Bearer "):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+    
+    token = authorization[len("Bearer "):]
+    try:
+        user_number = verify_token(token)
+        return user_number
+    except HTTPException:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
 
 
 @app.on_event("startup")
@@ -74,6 +97,11 @@ async def startup_db_client():
 @app.on_event("shutdown")
 def shutdown_db_client():
     app.mongodb_client.close()
+
+
+@app.get("/ping")
+def ping():
+    return {"message": "pong"}
 
 @app.post("/register")
 async def register_user(user: User):
@@ -164,6 +192,8 @@ async def add_contact(number: int, authorization: str = Header(None)):
     if result.modified_count == 0:
         raise HTTPException(status_code = 500, detail = "Unexpected error")
     
+    #!Tutaj trzeba jeszcze dodać sprawdzanie, czy dodawany kontakt ma już rozpoczętą konwersację i jak ma, to skopiować id z niej, bo inaczej to nie siądzie xD
+    
     return {"message": "Contact added"}
 
 @app.get("/contacts")
@@ -187,3 +217,46 @@ async def get_contacts(authorization: str = Header(None)):
     #TODO ☝️ to w sumie też można przerzucić do funkcji potem
 
     return {"contacts": conversations["contacts"]}
+
+@app.websocket("/ts")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Test: {data}")
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    
+    user_number = await websocket_auth(websocket)
+    if not user_number:
+        return
+    
+    await websocket.accept()
+
+    print(f"🛜{user_number} połączony, websocket: {websocket}\n")
+
+    active_connections[user_number] = websocket
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            print(f"✉️{user_number}: {data}\n")
+
+            message = json.loads(data)
+            destination_id = message["to"]
+            destination_number = app.mongodb["conversations"].find_one({"owner": user_number, "contacts": {"$elemMatch": {"id": destination_id}}}, {"contacts.$": 1})
+            content = message["content"]
+
+            print(f"📨destination_id: {destination_id}, destination_number: {destination_number}, content: {content}")
+
+            app.mongodb["messages"].insert_one({"conversation_id": destination_id, "sender": user_number, "content": content, "timestamp": datetime.now(timezone.utc).isoformat()})
+
+            if destination_number in active_connections:
+                await active_connections[destination_number].send_text(f"conversation: {destination_id}, content: {content}")
+            else:
+                print(f"🦹{user_number} offline, zapisano do bazy")
+    
+    except WebSocketDisconnect:
+        print(f"📵 {user_number} rozłączył się")
+        del active_connections[user_number]
