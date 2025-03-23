@@ -163,3 +163,25 @@ async def add_contact(number: int, authorization: str = Header(None)):
 
     if result.modified_count == 0:
         raise HTTPException(status_code = 500, detail = "Unexpected error")
+
+@app.get("/contacts")
+async def get_contacts(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code = 401, detail = "Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
+    
+    token = authorization[len("Bearer "):]
+    user_number = verify_token(token)
+
+    conversations = app.mongodb["conversations"].find_one({"owner": user_number})
+    if not conversations:
+        new_conversations = {
+            "owner": user_number,
+            "contacts": []
+        }
+        app.mongodb["conversations"].insert_one(new_conversations)
+    #TODO ☝️ to w sumie też można przerzucić do funkcji potem
+
+    return {"contacts": conversations["contacts"]}
