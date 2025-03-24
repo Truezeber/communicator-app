@@ -33,6 +33,8 @@ class LoginToken(BaseModel):
 class AddContact(BaseModel):
     number: int
 
+#TODO walidacja tych modeli + zmiana number na string zamiast na int
+
 JWT_SECRET = os.getenv("JWT_SECRET") or "7938013fe5cec581a02dc8d547077804dfa02a1a07a9daac64890607da927013"
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
 
@@ -145,16 +147,6 @@ async def login_user(user: LoginUser):
     
     token = create_token(data = {"sub": int(user.number)})
     return {"access_token": token, "token_type": "bearer"}
-
-@app.get("/test")
-async def test_token(test: str, authorization: str = Header(None)):
-    user_number = verify_user(authorization)
-
-    user = app.mongodb["users"].find_one({"number": user_number})
-    if not user:
-        raise HTTPException(status_code = 404, detail = "User not found")
-    
-    return {"name": user["name"],"surname": user["surname"], "param": test}
 
 @app.post("/contacts/add")
 async def add_contact(number: int, authorization: str = Header(None)):
