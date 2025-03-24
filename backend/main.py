@@ -61,6 +61,18 @@ def verify_token(token: str):
         traceback.print_exc()
         raise HTTPException(status_code = 500, detail = f"Unexpected error: {str(e)}")
     
+def verify_user(authorization: str):
+    if not authorization:
+        raise HTTPException(status_code = 401, detail = "Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
+    
+    token = authorization[len("Bearer "):]
+    user_number = verify_token(token)
+
+    return user_number
+    
 async def websocket_auth(websocket: WebSocket):
     query_params = websocket.query_params
     authorization = query_params.get("authorization")
@@ -138,14 +150,7 @@ async def login_user(user: LoginUser):
 
 @app.get("/test")
 async def test_token(test: str, authorization: str = Header(None)):
-    if not authorization:
-        raise HTTPException(status_code = 401, detail = "Authorization header missing")
-    
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
-    
-    token = authorization[len("Bearer "):]
-    user_number = verify_token(token)
+    user_number = verify_user(authorization)
 
     user = app.mongodb["users"].find_one({"number": user_number})
     if not user:
@@ -155,14 +160,7 @@ async def test_token(test: str, authorization: str = Header(None)):
 
 @app.post("/contacts/add")
 async def add_contact(number: int, authorization: str = Header(None)):
-    if not authorization:
-        raise HTTPException(status_code = 401, detail = "Authorization header missing")
-    
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
-    
-    token = authorization[len("Bearer "):]
-    user_number = verify_token(token)
+    user_number = verify_user(authorization)
 
     #TODO ☝️ Całe to to w ogóle mogę potem do funkcji jakiejś wrzucić, bo przy tylu endpointach to będzie wyglądać tragicznie
 
@@ -198,14 +196,7 @@ async def add_contact(number: int, authorization: str = Header(None)):
 
 @app.get("/contacts")
 async def get_contacts(authorization: str = Header(None)):
-    if not authorization:
-        raise HTTPException(status_code = 401, detail = "Authorization header missing")
-    
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code = 401, detail = "Invalid authorization header")
-    
-    token = authorization[len("Bearer "):]
-    user_number = verify_token(token)
+    user_number = verify_user(authorization)
 
     conversations = app.mongodb["conversations"].find_one({"owner": user_number})
     if not conversations:
