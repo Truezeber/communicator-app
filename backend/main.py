@@ -162,8 +162,6 @@ async def test_token(test: str, authorization: str = Header(None)):
 async def add_contact(number: int, authorization: str = Header(None)):
     user_number = verify_user(authorization)
 
-    #TODO ☝️ Całe to to w ogóle mogę potem do funkcji jakiejś wrzucić, bo przy tylu endpointach to będzie wyglądać tragicznie
-
     conversations = app.mongodb["conversations"].find_one({"owner": user_number})
 
     if not conversations:
@@ -180,7 +178,17 @@ async def add_contact(number: int, authorization: str = Header(None)):
     if existing_contact:
         raise HTTPException(status_code = 400, detail = "Contact is existing")
     
-    id = f"{int(time.time())}{random.randint(1000, 9999)}"
+    existing_conversation = app.mongodb["conversations"].find_one(
+        {"owner": number, "contacts.number": user_number}, {"contacts.$": 1}
+    )
+
+    if existing_conversation:
+        contact = existing_conversation["contacts"][0]
+        id = contact["id"]
+
+        print(f"id: {id}")
+    else:
+        id = f"{int(time.time())}{random.randint(1000, 9999)}"
 
     result = app.mongodb["conversations"].update_one(
         {"owner": user_number},
@@ -205,7 +213,6 @@ async def get_contacts(authorization: str = Header(None)):
             "contacts": []
         }
         app.mongodb["conversations"].insert_one(new_conversations)
-    #TODO ☝️ to w sumie też można przerzucić do funkcji potem
 
     return {"contacts": conversations["contacts"]}
 
