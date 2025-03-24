@@ -121,8 +121,8 @@ async def register_user(user: User):
     if existing_user:
         raise HTTPException(status_code = 400, detail = "Number taken")
     
-    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt()) #TODO Paskudnie to wygląda w database
-                                                                                     #TODO wrzucić to do stringa potem
+    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt()) 
+    
     user_obj = {
         "number": user.number,
         "name": user.name,
@@ -130,7 +130,7 @@ async def register_user(user: User):
         "password": hashed_password
     }
 
-    app.mongodb["users"].insert_one(user_obj) #? Tutaj sprawdzić, czy istnieje jakaś obsługa błędów
+    app.mongodb["users"].insert_one(user_obj)
 
     return {"message": "User registered"}
 
@@ -142,8 +142,6 @@ async def login_user(user: LoginUser):
     
     if not bcrypt.checkpw(user.password.encode("utf-8"), user_record["password"]):
         raise HTTPException(status_code = 400, detail = "Wrong number or password")
-    
-    #TODO ☝️ to mogę zapisać w jednym ifie kiedyśtam
     
     token = create_token(data = {"sub": int(user.number)})
     return {"access_token": token, "token_type": "bearer"}
@@ -197,8 +195,6 @@ async def add_contact(number: int, authorization: str = Header(None)):
 
     if result.modified_count == 0:
         raise HTTPException(status_code = 500, detail = "Unexpected error")
-    
-    #!Tutaj trzeba jeszcze dodać sprawdzanie, czy dodawany kontakt ma już rozpoczętą konwersację i jak ma, to skopiować id z niej, bo inaczej to nie siądzie xD
     
     return {"message": "Contact added"}
 
