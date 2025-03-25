@@ -250,13 +250,6 @@ async def avatar_get(number: int):
     
     return {"avatar_url": user["avatar_url"]}
 
-@app.websocket("/ts")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Test: {data}")
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     
