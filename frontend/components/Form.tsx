@@ -17,6 +17,10 @@ const backendHomeUrl = "http://localhost:8000";
 
 function Form() {
   const [spinning, setSpinning] = useState(false);
+
+  const [lnumberError, setlnumberError] = useState("");
+  const [lpasswordError, setlpasswordError] = useState("");
+
   const router = useRouter();
 
   const [form_signin, setForm_signin] = useState({
@@ -51,6 +55,17 @@ function Form() {
   };
 
   const handleSubmit_signin = async () => {
+    if (form_signin.lnumber == null) {
+      setlnumberError("Number is required");
+    } else {
+      setlnumberError("");
+    }
+
+    if (form_signin.lpassword === "") {
+      setlpasswordError("Password is required");
+    } else {
+      setlpasswordError("");
+    }
     console.log(`Form data: ${JSON.stringify(form_signin, null, 2)}`);
   };
 
@@ -81,21 +96,23 @@ function Form() {
             </Stack>
 
             <Fieldset.Content>
-              <Field.Root>
+              <Field.Root invalid={lnumberError !== ""}>
                 <Field.Label>Number</Field.Label>
                 <Input
                   name="lnumber"
                   type="number"
                   onChange={updateField_signin}
                 />
+                <Field.ErrorText>{lnumberError}</Field.ErrorText>
               </Field.Root>
-              <Field.Root>
+              <Field.Root invalid={lpasswordError !== ""}>
                 <Field.Label>Password</Field.Label>
                 <Input
                   name="lpassword"
                   type="password"
                   onChange={updateField_signin}
                 />
+                <Field.ErrorText>{lpasswordError}</Field.ErrorText>
               </Field.Root>
               <Button loading={spinning} onClick={handleSubmit_signin}>
                 Sign In
