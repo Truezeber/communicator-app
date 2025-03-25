@@ -33,8 +33,6 @@ class LoginToken(BaseModel):
 class AddContact(BaseModel):
     number: int
 
-#TODO walidacja tych modeli + zmiana number na string zamiast na int
-
 JWT_SECRET = os.getenv("JWT_SECRET") or "7938013fe5cec581a02dc8d547077804dfa02a1a07a9daac64890607da927013"
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
 
@@ -247,7 +245,7 @@ async def websocket_endpoint(websocket: WebSocket):
     
     await websocket.accept()
 
-    print(f"🛜{user_number} połączony, websocket: {websocket}\n")
+    print(f"🛜{user_number} connected, websocket: {websocket}\n")
 
     active_connections[user_number] = websocket
 
@@ -258,17 +256,21 @@ async def websocket_endpoint(websocket: WebSocket):
 
             message = json.loads(data)
             destination_id = message["to"]
-            destination_number = app.mongodb["conversations"].find_one({"owner": user_number, "contacts": {"$elemMatch": {"id": destination_id}}}, {"contacts.$": 1})
+            conversation = app.mongodb["conversations"].find_one({"owner": user_number, "contacts": {"$elemMatch": {"id": destination_id}}},{"contacts.$": 1})
             content = message["content"]
+
+            destination_number = None
+            if conversation and "contacts" in conversation and conversation["contacts"]:
+                destination_number = conversation["contacts"][0]["number"]
 
             print(f"📨destination_id: {destination_id}, destination_number: {destination_number}, content: {content}")
 
-            app.mongodb["messages"].insert_one({"conversation_id": destination_id, "sender": user_number, "content": content, "timestamp": datetime.now(timezone.utc).isoformat()})
+            app.mongodb["messages"].insert_one({"conversation_id": destination_id, "sender": user_number, "content": content, "timestamp": datetime.now(timezone.utc)})
 
             if destination_number in active_connections:
                 await active_connections[destination_number].send_text(f"conversation: {destination_id}, content: {content}")
             else:
-                print(f"🦹{user_number} offline, zapisano do bazy")
+                print(f"🦹{destination_number} offline, saving to database")
     
     except WebSocketDisconnect:
         print(f"📵 {user_number} rozłączył się")
