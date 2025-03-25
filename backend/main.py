@@ -8,7 +8,7 @@ import json
 from fastapi import FastAPI, HTTPException, Header, WebSocket, WebSocketDisconnect, status
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 
@@ -32,6 +32,9 @@ class LoginToken(BaseModel):
 
 class AddContact(BaseModel):
     number: int
+
+class UpdateAvatar(BaseModel):
+    avatar_url: HttpUrl
 
 JWT_SECRET = os.getenv("JWT_SECRET") or "7938013fe5cec581a02dc8d547077804dfa02a1a07a9daac64890607da927013"
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM") or "HS256"
@@ -229,6 +232,14 @@ async def get_messages(conversation_id: str, timestamp: str = None, authorizatio
         message["timestamp"] = message["timestamp"].isoformat()
 
     return {"messages": messages}
+
+@app.put("/avatar_update")
+async def avatar_update(avatar: UpdateAvatar, authorization: str = Header(None)):
+    user_number = verify_user(authorization)
+
+    app.mongodb["users"].update_one({"number": user_number}, {"$set": {"avatar_url": avatar.avatar_url}})
+
+    return {"message": "Avatar updated"}
 
 @app.websocket("/ts")
 async def websocket_endpoint(websocket: WebSocket):
