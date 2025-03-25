@@ -204,6 +204,33 @@ async def get_contacts(authorization: str = Header(None)):
 
     return {"contacts": conversations["contacts"]}
 
+@app.get("/messages")
+async def get_messages(conversation_id: str, timestamp: str = None, authorization: str = Header(None)):
+    user_number = verify_user(authorization)
+
+    conversation = app.mongodb["conversations"].find_one({"owner": user_number, "contacts": {"$elemMatch": {"id": conversation_id}}}, {"contacts.$": 1})
+
+    if not conversation:
+        raise HTTPException(status_code = 404, detail = "Conversation not found")
+    
+    if timestamp:
+        try:
+            timestamp_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(status_code = 400, detail="Invalid timestamp format, use ISO like 2025-03-20T10:05:00.000Z")
+        
+        messages_cursor = app.mongodb["messages"].find({"conversation_id": conversation_id, "timestamp": {"$lt": timestamp_dt}}).sort("timestamp", -1).limit(10)
+    else:
+        messages_cursor = app.mongodb["messages"].find({"conversation_id": conversation_id}).sort("timestamp", -1).limit(10)
+
+    messages = list(messages_cursor)
+
+    for message in messages:
+        message["_id"] = str(message["_id"])
+        message["timestamp"] = message["timestamp"].isoformat()
+
+    return {"messages": messages}
+
 @app.websocket("/ts")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
