@@ -241,6 +241,15 @@ async def avatar_update(avatar: UpdateAvatar, authorization: str = Header(None))
 
     return {"message": "Avatar updated"}
 
+@app.get("/avatar_get")
+async def avatar_get(number: int):
+    user = app.mongodb["users"].find_one({"number": number}, {"avatar_url": 1})
+
+    if not user:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    
+    return {"avatar_url": user["avatar_url"]}
+
 @app.websocket("/ts")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
