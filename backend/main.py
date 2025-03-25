@@ -127,7 +127,8 @@ async def register_user(user: User):
         "number": user.number,
         "name": user.name,
         "surname": user.surname,
-        "password": hashed_password
+        "password": hashed_password,
+        "avatar_url": f"https://i.pravatar.cc/300?u={user.number}"
     }
 
     app.mongodb["users"].insert_one(user_obj)
