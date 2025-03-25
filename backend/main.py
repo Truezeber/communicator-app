@@ -237,7 +237,7 @@ async def get_messages(conversation_id: str, timestamp: str = None, authorizatio
 async def avatar_update(avatar: UpdateAvatar, authorization: str = Header(None)):
     user_number = verify_user(authorization)
 
-    app.mongodb["users"].update_one({"number": user_number}, {"$set": {"avatar_url": avatar.avatar_url}})
+    app.mongodb["users"].update_one({"number": user_number}, {"$set": {"avatar_url": str(avatar.avatar_url)}})
 
     return {"message": "Avatar updated"}
 
