@@ -18,16 +18,17 @@ import { CgUser, CgUserAdd } from "react-icons/cg";
 const backendHomeUrl = "http://localhost:8000";
 
 function Form() {
-  const [spinning, setSpinning] = useState(false);
+  const [spinning, setSpinning] = useState<boolean>(false);
+  const [signinError, setSigninError] = useState<string | null>(null);
 
-  const [lnumberError, setlnumberError] = useState("");
-  const [lpasswordError, setlpasswordError] = useState("");
+  const [lnumberError, setlnumberError] = useState<string>("");
+  const [lpasswordError, setlpasswordError] = useState<string>("");
 
-  const [numberError, setnumberError] = useState("");
-  const [passwordError, setpasswordError] = useState("");
-  const [rpasswordError, setrpasswordError] = useState("");
-  const [nameError, setnameError] = useState("");
-  const [surnameError, setsurnameError] = useState("");
+  const [numberError, setnumberError] = useState<string>("");
+  const [passwordError, setpasswordError] = useState<string>("");
+  const [rpasswordError, setrpasswordError] = useState<string>("");
+  const [nameError, setnameError] = useState<string>("");
+  const [surnameError, setsurnameError] = useState<string>("");
 
   const router = useRouter();
 
