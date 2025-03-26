@@ -146,6 +146,7 @@ function Form() {
       }
     );
     setSpinning(false);
+    router.push("/app");
   };
 
   const handleSubmit_signup = async () => {
@@ -203,11 +204,12 @@ function Form() {
       });
     });
     setSpinning(false);
+    router.push("/app");
   };
 
   return (
-    <Flex colorPalette="teal" suppressHydrationWarning>
-      <Tabs.Root defaultValue="signin">
+    <Flex colorPalette="teal" w="1/3">
+      <Tabs.Root defaultValue="signin" w="100%">
         <Tabs.List>
           <Tabs.Trigger value="signin">
             <CgUser />
