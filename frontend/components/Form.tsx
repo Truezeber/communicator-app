@@ -186,12 +186,22 @@ function Form() {
 
     setSpinning(true);
     console.log(`Form data: ${JSON.stringify(form_signup, null, 2)}`);
+
+    const number = form_signup.number; //Easiest way to forward data to signIn later, at least it works
+    const password = form_signup.password;
+
     await signUp(
       form_signup.number,
       form_signup.password,
       form_signup.name,
       form_signup.surname
-    );
+    ).then(() => {
+      signIn(number, password).then((tokenData) => {
+        if (tokenData) {
+          saveJWT(tokenData.access_token);
+        }
+      });
+    });
     setSpinning(false);
   };
 
