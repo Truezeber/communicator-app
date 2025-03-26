@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CgUser, CgUserAdd } from "react-icons/cg";
+import { CgUser, CgUserList } from "react-icons/cg";
 
 const backendHomeUrl = "http://localhost:8000";
 
@@ -221,7 +221,7 @@ function Form() {
             Sign In
           </Tabs.Trigger>
           <Tabs.Trigger value="signup">
-            <CgUserAdd />
+            <CgUserList />
             Sign Up
           </Tabs.Trigger>
         </Tabs.List>

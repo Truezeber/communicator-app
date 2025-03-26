@@ -2,7 +2,16 @@
 
 import ContactButton from "@/components/ContactButton";
 import ProfileMenu from "@/components/ProfileMenu";
-import { Grid, GridItem, Flex, Box } from "@chakra-ui/react";
+import {
+  Grid,
+  GridItem,
+  Flex,
+  Box,
+  Button,
+  Menu,
+  Portal,
+} from "@chakra-ui/react";
+import { CgFile, CgLogOut, CgUserAdd } from "react-icons/cg";
 
 export default function App() {
   return (
@@ -30,10 +39,43 @@ export default function App() {
             ID="XD"
           />
           <Box marginTop="auto">
-            <ProfileMenu
-              avatar="https://i.pravatar.cc/300"
-              number={123123123}
-            />
+            <Menu.Root>
+              <Menu.Trigger asChild>
+                <Button
+                  height="fit-content"
+                  bg="blue.400"
+                  margin="0.5vh 0 0 0"
+                  cursor="pointer"
+                >
+                  <ProfileMenu
+                    avatar="https://i.pravatar.cc/300"
+                    number={123123123}
+                  />
+                </Button>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item value="addContact">
+                      <CgUserAdd />
+                      <Box flex="1">Add contact</Box>
+                    </Menu.Item>
+                    <Menu.Item value="changeAvatar">
+                      <CgFile />
+                      <Box flex="1">Change avatar</Box>
+                    </Menu.Item>
+                    <Menu.Item
+                      value="Sign out"
+                      color="fg.error"
+                      _hover={{ bg: "bg.error", color: "fg.error" }}
+                    >
+                      <CgLogOut />
+                      <Box flex="1">Sign out</Box>
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
           </Box>
         </Flex>
       </GridItem>
