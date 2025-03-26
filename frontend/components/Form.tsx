@@ -68,7 +68,7 @@ function Form() {
       if (!response.ok) {
         setSigninError(data.detail || "Login failed");
         setSpinning(false);
-        return null;
+        return;
       }
       return data;
     } catch (err) {
@@ -135,7 +135,7 @@ function Form() {
     } else {
       setlpasswordError("");
     }
-
+    setSigninError(null);
     setSpinning(true);
     console.log(`Form data: ${JSON.stringify(form_signin, null, 2)}`);
     await signIn(form_signin.lnumber, form_signin.lpassword).then(
@@ -146,7 +146,12 @@ function Form() {
       }
     );
     setSpinning(false);
-    router.push("/app");
+    if (signinError !== null) {
+      saveJWT("");
+      return;
+    } else {
+      router.push("/app");
+    }
   };
 
   const handleSubmit_signup = async () => {
