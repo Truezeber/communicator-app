@@ -8,8 +8,10 @@ import {
   Flex,
   Box,
   Button,
+  CloseButton,
   Menu,
   Portal,
+  Dialog,
 } from "@chakra-ui/react";
 import { CgFile, CgLogOut, CgUserAdd } from "react-icons/cg";
 
@@ -65,7 +67,7 @@ export default function App() {
                       <Box flex="1">Change avatar</Box>
                     </Menu.Item>
                     <Menu.Item
-                      value="Sign out"
+                      value="signOut"
                       color="fg.error"
                       _hover={{ bg: "bg.error", color: "fg.error" }}
                     >
