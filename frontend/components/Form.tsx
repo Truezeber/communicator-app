@@ -47,6 +47,23 @@ function Form() {
     localStorage.setItem("JWT", token);
   };
 
+  const signIn = async (number: number, password: string) => {
+    const response = await fetch(`${backendHomeUrl}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        number: number,
+        password: password,
+      }),
+    });
+
+    const data = await response.json();
+    console.log("Twój token:", data.access_token);
+    return data;
+  };
+
   const updateField_signin = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm_signin({
       ...form_signin,
@@ -64,17 +81,26 @@ function Form() {
   const handleSubmit_signin = async () => {
     if (form_signin.lnumber == null) {
       setlnumberError("Number is required");
+      return;
     } else {
       setlnumberError("");
     }
 
     if (form_signin.lpassword === "") {
       setlpasswordError("Password is required");
+      return;
     } else {
       setlpasswordError("");
     }
 
+    setSpinning(true);
     console.log(`Form data: ${JSON.stringify(form_signin, null, 2)}`);
+    await signIn(form_signin.lnumber, form_signin.lpassword).then(
+      (tokenData) => {
+        console.log("Cała odpowiedź:", tokenData);
+      }
+    );
+    setSpinning(false);
   };
 
   const handleSubmit_signup = async () => {
@@ -128,9 +154,7 @@ function Form() {
           <Fieldset.Root as="form" size="md" maxW="md">
             <Stack>
               <Fieldset.Legend>Sign In</Fieldset.Legend>
-              <Fieldset.HelperText>
-                Please tell us who you are
-              </Fieldset.HelperText>
+              <Fieldset.HelperText>Welcome back 👋</Fieldset.HelperText>
             </Stack>
 
             <Fieldset.Content>
@@ -162,9 +186,7 @@ function Form() {
           <Fieldset.Root size="md" maxW="md">
             <Stack>
               <Fieldset.Legend>Sign Up</Fieldset.Legend>
-              <Fieldset.HelperText>
-                Please tell us who you are
-              </Fieldset.HelperText>
+              <Fieldset.HelperText>Introduce yourself 🤝</Fieldset.HelperText>
             </Stack>
 
             <Fieldset.Content>

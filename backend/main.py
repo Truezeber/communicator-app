@@ -6,6 +6,7 @@ import random
 import json
 
 from fastapi import FastAPI, HTTPException, Header, WebSocket, WebSocketDisconnect, status
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pydantic import BaseModel, HttpUrl
@@ -15,6 +16,14 @@ from datetime import datetime, timedelta, timezone
 load_dotenv()
 app = FastAPI()
 active_connections = {}
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class User(BaseModel):
     number: int
