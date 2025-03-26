@@ -9,6 +9,7 @@ import {
   Input,
   Stack,
   Tabs,
+  Alert,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -48,20 +49,28 @@ function Form() {
   };
 
   const signIn = async (number: number, password: string) => {
-    const response = await fetch(`${backendHomeUrl}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        number: number,
-        password: password,
-      }),
-    });
+    try {
+      const response = await fetch(`${backendHomeUrl}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          number: number,
+          password: password,
+        }),
+      });
 
-    const data = await response.json();
-    console.log("Twój token:", data.access_token);
-    return data;
+      const data = await response.json();
+      if (!response.ok) {
+        setSigninError(data.detail || "Login failed");
+        setSpinning(false);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      setSigninError(err instanceof Error ? err.message : "Undefined error");
+    }
   };
 
   const updateField_signin = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +106,9 @@ function Form() {
     console.log(`Form data: ${JSON.stringify(form_signin, null, 2)}`);
     await signIn(form_signin.lnumber, form_signin.lpassword).then(
       (tokenData) => {
-        console.log("Cała odpowiedź:", tokenData);
+        if (tokenData) {
+          saveJWT(tokenData.access_token);
+        }
       }
     );
     setSpinning(false);
@@ -152,6 +163,14 @@ function Form() {
         </Tabs.List>
         <Tabs.Content value="signin">
           <Fieldset.Root as="form" size="md" maxW="md">
+            {signinError ? (
+              <Alert.Root status="error">
+                <Alert.Indicator />
+                <Alert.Title>{signinError}</Alert.Title>
+              </Alert.Root>
+            ) : (
+              <></>
+            )}
             <Stack>
               <Fieldset.Legend>Sign In</Fieldset.Legend>
               <Fieldset.HelperText>Welcome back 👋</Fieldset.HelperText>
