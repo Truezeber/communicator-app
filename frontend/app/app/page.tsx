@@ -32,17 +32,17 @@ export default function App() {
           borderColor="gray.500"
         >
           <ContactButton
-            avatar="https://i.pravatar.cc/300"
+            avatar="https://i.pravatar.cc/301"
             number={123123123}
             ID="XD"
           />
           <ContactButton
-            avatar="https://i.pravatar.cc/300"
+            avatar="https://i.pravatar.cc/310"
             number={123123123}
             ID="XD"
           />
           <ContactButton
-            avatar="https://i.pravatar.cc/300"
+            avatar="https://i.pravatar.cc/320"
             number={123123123}
             ID="XD"
           />

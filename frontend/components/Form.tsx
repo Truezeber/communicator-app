@@ -69,8 +69,9 @@ function Form() {
         setSigninError(data.detail || "Login failed");
         setSpinning(false);
         return;
+      } else {
+        return data;
       }
-      return data;
     } catch (err) {
       setSigninError(err instanceof Error ? err.message : "Undefined error");
     }
@@ -142,16 +143,14 @@ function Form() {
       (tokenData) => {
         if (tokenData) {
           saveJWT(tokenData.access_token);
+          router.push("/app");
+        } else {
+          saveJWT("");
+          console.log(`Problem: ${signinError}`);
         }
       }
     );
     setSpinning(false);
-    if (signinError !== null) {
-      saveJWT("");
-      return;
-    } else {
-      router.push("/app");
-    }
   };
 
   const handleSubmit_signup = async () => {
