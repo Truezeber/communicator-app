@@ -20,6 +20,8 @@ const backendHomeUrl = "http://localhost:8000";
 function Form() {
   const [spinning, setSpinning] = useState<boolean>(false);
   const [signinError, setSigninError] = useState<string | null>(null);
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState<any>(null); //typing hack, too sleepy to make an interface for that, no need to fix tho
 
   const [lnumberError, setlnumberError] = useState<string>("");
   const [lpasswordError, setlpasswordError] = useState<string>("");
@@ -74,6 +76,37 @@ function Form() {
     }
   };
 
+  const signUp = async (
+    number: number,
+    password: string,
+    name: string,
+    surname: string
+  ) => {
+    try {
+      const response = await fetch(`${backendHomeUrl}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          number: number,
+          password: password,
+          name: name,
+          surname: surname,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setSignupError(data.detail || "Login failed");
+        setSpinning(false);
+        return null;
+      }
+      setSignupSuccess(data);
+    } catch (err) {
+      setSignupError(err instanceof Error ? err.message : "Undefined error");
+    }
+  };
+
   const updateField_signin = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm_signin({
       ...form_signin,
@@ -118,35 +151,48 @@ function Form() {
   const handleSubmit_signup = async () => {
     if (form_signup.number == null) {
       setnumberError("Number is required");
+      return;
     } else {
       setnumberError("");
     }
 
     if (form_signup.password === "") {
       setpasswordError("Password is required");
+      return;
     } else {
       setpasswordError("");
     }
 
     if (form_signup.password !== form_signup.rpassword) {
       setrpasswordError("Passwords needs to be the same");
+      return;
     } else {
       setrpasswordError("");
     }
 
     if (form_signup.name === "") {
       setnameError("Name is required");
+      return;
     } else {
       setnameError("");
     }
 
     if (form_signup.surname === "") {
       setsurnameError("Surname is required");
+      return;
     } else {
       setsurnameError("");
     }
 
+    setSpinning(true);
     console.log(`Form data: ${JSON.stringify(form_signup, null, 2)}`);
+    await signUp(
+      form_signup.number,
+      form_signup.password,
+      form_signup.name,
+      form_signup.surname
+    );
+    setSpinning(false);
   };
 
   return (
@@ -204,6 +250,22 @@ function Form() {
         </Tabs.Content>
         <Tabs.Content value="signup">
           <Fieldset.Root size="md" maxW="md">
+            {signupError ? (
+              <Alert.Root status="error">
+                <Alert.Indicator />
+                <Alert.Title>{signupError}</Alert.Title>
+              </Alert.Root>
+            ) : (
+              <></>
+            )}
+            {signupSuccess ? (
+              <Alert.Root status="success">
+                <Alert.Indicator />
+                <Alert.Title>{signupSuccess.message}</Alert.Title>
+              </Alert.Root>
+            ) : (
+              <></>
+            )}
             <Stack>
               <Fieldset.Legend>Sign Up</Fieldset.Legend>
               <Fieldset.HelperText>Introduce yourself 🤝</Fieldset.HelperText>
